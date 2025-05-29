@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: cropwise_fields_map_development
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    volumes:
+      - .:/app
+      - bundle_cache:/usr/local/bundle
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgis://postgres:password@db:5432/cropwise_fields_map_development
+      RAILS_ENV: development
+      RAILS_MAX_THREADS: 5
+      DATABASE_HOST: db
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGIS_ENABLE_EXTENSION: "true"
+      POSTGIS_EXTENSION_NAME: "postgis"
+      RAILS_ADAPTER: postgis
+
+volumes:
+  postgres_data:
+  bundle_cache:
